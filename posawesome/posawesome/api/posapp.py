@@ -70,6 +70,33 @@ def get_opening_dialog_data():
     return data
 
 
+# @frappe.whitelist()
+# def get_membership_card_add(customer=None):
+#     cards = frappe.db.sql("""
+#         SELECT name,pos_offer,max_use 
+#         FROM `tabMemberShip Card` 
+#         WHERE customer = %s AND max_use > used
+#     """, customer, as_dict=True)
+#     return cards
+
+
+@frappe.whitelist()
+def get_membership_card_add(customer):
+    cards = frappe.db.sql("""
+        SELECT
+            mc.name,
+            mc.pos_offer,
+            mc.max_use,
+            CASE WHEN po.discount_type = 'Discount Amount' THEN po.discount_amount
+                 WHEN po.discount_type = 'Discount Percentage' THEN po.discount_percentage
+                 ELSE NULL END AS discount_value,
+            po.discount_type
+        FROM `tabMemberShip Card` mc
+        JOIN `tabPOS Offer` po ON mc.pos_offer = po.name
+        WHERE mc.customer = %s AND mc.max_use > mc.used
+    """, customer, as_dict=True)
+    return cards
+
 @frappe.whitelist()
 def create_opening_voucher(pos_profile, company, balance_details):
     balance_details = json.loads(balance_details)
@@ -87,7 +114,6 @@ def create_opening_voucher(pos_profile, company, balance_details):
     )
     new_pos_opening.set("balance_details", balance_details)
     new_pos_opening.insert(ignore_permissions=True)
-
     data = {}
     data["pos_opening_shift"] = new_pos_opening.as_dict()
     update_opening_shift_data(data, new_pos_opening.pos_profile)
@@ -1073,6 +1099,14 @@ def get_item_detail(item, doc=None, warehouse=None, price_list=None):
     res["batch_no_data"] = batch_no_data
     return res
 
+def get_customer_discounts(customer):
+    cards = frappe.db.sql("""
+        SELECT po.discount_type,po.discount_amount
+        FROM `tabMemberShip Card` mc
+        JOIN `tabPOS Offer` po ON mc.pos_offer = po.name
+        WHERE mc.customer = %s AND max_use > used
+    """, customer, as_dict=True)
+    return cards
 
 def get_stock_availability(item_code, warehouse):
     actual_qty = (
@@ -1762,6 +1796,30 @@ def get_active_gift_coupons(customer, company):
     if len(coupons_data):
         coupons = [i.coupon_code for i in coupons_data]
     return coupons
+
+@frappe.whitelist()
+def get_active_gift_member(customer,company=None):
+    member_cards = []
+    frappe.errprint(member_cards)
+    coupons_data = frappe.get_all(
+        "MemberShip Card",
+        filters={
+            "customer": customer,
+        },
+        fields=["name", "valid_from", "pos_offer","max_use"]
+    )
+    if coupons_data:
+        for card in coupons_data:
+            member_card = {
+                "name": card.name,
+                "valid_from": card.valid_from,
+                "pos_offer": card.pos_offer,
+                "max_use":card.max_use
+            }
+            frappe.errprint(member_cards)
+            member_cards.append(member_card)
+            frappe.errprint(member_cards)
+    return member_cards
 
 
 @frappe.whitelist()

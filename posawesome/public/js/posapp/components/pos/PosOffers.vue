@@ -126,6 +126,7 @@ export default {
     },
     forceUpdateItem() {
       let list_offers = [];
+      console.log()
       list_offers = [...this.pos_offers];
       this.pos_offers = list_offers;
     },
@@ -144,6 +145,7 @@ export default {
       const toRemove = [];
       this.pos_offers.forEach((pos_offer) => {
         const offer = offers.find((offer) => offer.name === pos_offer.name);
+        console.log(offer)
         if (!offer) {
           toRemove.push(pos_offer.row_id);
         }
@@ -232,7 +234,7 @@ export default {
         const items = this.allItems;
         let filterd_items = [];
         const filterd_items_1 = items.filter(
-          (item) => item.item_group == offer.apply_item_group
+          (item) => item.item_group == obffer.apply_item_group
         );
         if (offer.less_then > 0) {
           filterd_items = filterd_items_1.filter(
@@ -257,6 +259,36 @@ export default {
         (offer) => offer.offer_applied && offer.coupon_based
       );
       evntBus.$emit('update_pos_coupons', applyedOffers);
+    },
+    applyOffers(offers) {
+      offers.forEach(offer => {
+        if (!this.appliedOfferIds.has(offer.name)) {
+          this.applyDiscountToItems(offer, true);
+          this.appliedOfferIds.add(offer.name);
+          console.log(this.appliedOfferIds)
+        }
+      });
+    },
+    applyDiscountToItems(card, apply) {
+      this.allItems.forEach(item => {
+        if (item.name === card.pos_offer) {
+          if (apply) {
+            if (card.discount_type === 'Discount Amount') {
+              item.discount_amount = card.discount_value;
+            } else if (card.discount_type === 'Discount Percentage') {
+              item.discount_percentage = card.discount_value;
+            }
+          } else {
+            item.discount_amount = 0;
+            item.discount_percentage = 0;
+          }
+        }
+      });
+      this.updateInvoice();
+    },
+    updateInvoice() {
+      evntBus.$emit('update_invoice_coupons', this.posa_coupons2);
+      evntBus.$emit('update_invoice_items', this.allItems);
     },
   },
 
@@ -284,6 +316,9 @@ export default {
     });
     evntBus.$on('update_pos_offers', (data) => {
       this.updatePosOffers(data);
+    });
+    evntBus.$on('apply_offers', (offers) => {
+      this.applyOffers(offers);
     });
     evntBus.$on('update_discount_percentage_offer_name', (data) => {
       this.discount_percentage_offer_name = data.value;

@@ -96,7 +96,7 @@ export default {
       { text: __('Applied'), value: 'applied', align: 'start' },
     ],
   }),
-  
+
   computed: {
     couponsCount() {
       return this.posa_coupons.length;
@@ -110,46 +110,51 @@ export default {
     back_to_invoice() {
       evntBus.$emit('show_coupons', 'false');
     },
-    add_coupon(new_coupon) {
+
+    add_coupon2(new_coupon) {
       if (!this.customer || !new_coupon) return;
-      const exist = this.posa_coupons.find(
-        (el) => el.coupon_code == new_coupon
-      );
+      const exist = this.posa_coupons2.find(el => el.name == new_coupon);
       if (exist) {
         evntBus.$emit('show_mesage', {
-          text: __('This coupon already used !'),
-          color: 'error',
+          text: __('Member Is Added !'),
+          color: 'success',
         });
         return;
       }
       const vm = this;
       frappe.call({
-        method: 'posawesome.posawesome.api.posapp.get_pos_coupon',
+        method: 'posawesome.posawesome.api.posapp.get_membership_card_add',
         args: {
-          coupon: new_coupon,
           customer: vm.customer,
-          company: vm.pos_profile.company,
         },
         callback: function (r) {
           if (r.message) {
-            const res = r.message;
-            if (res.msg != 'Apply' || !res.coupon) {
+            const cards = r.message;
+            if (cards.length === 0) {
               evntBus.$emit('show_mesage', {
-                text: res.msg,
+                text: __('No valid membership card found.'),
                 color: 'error',
               });
-            } else {
-              vm.new_coupon = null;
-              const coupon = res.coupon;
-              vm.posa_coupons.push({
-                coupon: coupon.name,
-                coupon_code: coupon.coupon_code,
-                type: coupon.coupon_type,
-                applied: 0,
-                pos_offer: coupon.pos_offer,
-                customer: coupon.customer || vm.customer,
-              });
+              return;
             }
+
+            cards.forEach(card => {
+              vm.posa_coupons2.push({
+                coupon2: card.name,
+                name: card.name,
+                max_use: card.max_use,
+                applied: 0,
+                pos_offer: card.pos_offer,
+                customer: vm.customer,
+              });
+            });
+
+            evntBus.$emit('show_mesage', {
+              text: __('Membership card(s) added successfully!'),
+              color: 'success',
+            });
+
+            vm.new_coupon = null;
           }
         },
       });

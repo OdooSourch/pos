@@ -146,19 +146,24 @@
             dense
             rounded
           >
-            <v-btn small value="list">{{ __("List") }}</v-btn>
+          <v-btn small value="list">{{ __("List") }}</v-btn>
             <v-btn small value="card">{{ __("Card") }}</v-btn>
           </v-btn-toggle>
+        </v-col>
+        <v-col cols="5" class="mt-2">
+          <v-btn small block color="primary" text @click="show_offers"
+            >{{ offersCount }} {{ __("Offers") }} : {{ appliedOffersCount }}
+            {{ __("Applied") }}</v-btn
+          >
         </v-col>
         <v-col cols="4" class="mt-2">
           <v-btn small block color="primary" text @click="show_coupons"
             >{{ couponsCount }} {{ __("Coupons") }}</v-btn
           >
         </v-col>
-        <v-col cols="5" class="mt-2">
-          <v-btn small block color="primary" text @click="show_offers"
-            >{{ offersCount }} {{ __("Offers") }} : {{ appliedOffersCount }}
-            {{ __("Applied") }}</v-btn
+        <v-col cols="4" class="mt-2">
+          <v-btn small block color="primary" text @click="show_coupons2"
+            >{{ couponsCount2 }} {{ __("Member") }}</v-btn
           >
         </v-col>
       </v-row>
@@ -174,8 +179,13 @@ export default {
   mixins: [format],
   data: () => ({
     pos_profile: "",
+    membershipcard:null,
     flags: {},
     items_view: "list",
+    coupons: [],
+    coupons2: [],
+    offers:[],
+    payment: false,
     item_group: "ALL",
     loading: false,
     items_group: ["ALL"],
@@ -184,14 +194,21 @@ export default {
     first_search: "",
     itemsPerPage: 1000,
     offersCount: 0,
+    MemberCount : 0,
     appliedOffersCount: 0,
     couponsCount: 0,
     appliedCouponsCount: 0,
+    couponsCount2: 0,
+    appliedCouponsCount2: 0,
     customer_price_list: null,
     customer: null,
     new_line: false,
     qty: 1,
   }),
+  props: {
+    MemberCount: Number,
+    membershipcard: String,
+  },
 
   watch: {
     filtred_items(new_value, old_value) {
@@ -212,6 +229,12 @@ export default {
   methods: {
     show_offers() {
       evntBus.$emit("show_offers", "true");
+    },
+    show_members(){
+      evntBus.$emit("show_members", "true");
+    },
+    show_coupons2() {
+      evntBus.$emit("show_coupons2", "true");
     },
     show_coupons() {
       evntBus.$emit("show_coupons", "true");
@@ -275,6 +298,36 @@ export default {
             }
           }
         },
+      });
+    },
+    fetchActiveGiftMembers() {
+      this.loading = true;
+      const vm = this;
+
+      frappe.call({
+        method: 'posawesome.posawesome.api.posapp.get_active_gift_member',
+        args: {
+          customer: vm.customer,
+        },
+        callback: response => {
+          vm.loading = false;
+          console.log('API Response:', response);
+          if (response.message) {
+            const newMembers = response.message.map(member => ({
+              name: member.name,
+              valid_from: member.valid_from,
+              pos_offer: member.pos_offer,
+              applied: ''
+            }));
+
+            vm.show_member = [];
+
+            vm.show_member.push(...newMembers);
+            console.log('Fetched active gift members:', vm.show_member);
+          } else {
+            console.error('No active gift members found.');
+          }
+        }
       });
     },
     get_items_groups() {
@@ -650,6 +703,8 @@ export default {
         ? "card"
         : "list";
     });
+    
+
     evntBus.$on("update_cur_items_details", () => {
       this.update_cur_items_details();
     });
@@ -660,6 +715,10 @@ export default {
     evntBus.$on("update_coupons_counters", (data) => {
       this.couponsCount = data.couponsCount;
       this.appliedCouponsCount = data.appliedCouponsCount;
+    });
+    evntBus.$on("update_coupons_counters2", (data) => {
+      this.couponsCount2 = data.couponsCount2;
+      this.appliedCouponsCount2 = data.appliedCouponsCount2;
     });
     evntBus.$on("update_customer_price_list", (data) => {
       this.customer_price_list = data;

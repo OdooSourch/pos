@@ -7,7 +7,7 @@
     <NewAddress></NewAddress>
     <MpesaPayments></MpesaPayments>
     <Variants></Variants>
-    <OpeningDialog v-if="dialog" :dialog="dialog"></OpeningDialog>
+    <OpeningDialog v-if="dialog" :dialog="dialog"></OpeningDialog> 
     <v-row v-show="!dialog">
       <v-col
         v-show="!payment && !offers && !coupons"
@@ -43,6 +43,17 @@
         <PosCoupons></PosCoupons>
       </v-col>
       <v-col
+        v-show="coupons2"
+        xl="5"
+        lg="5"
+        md="5"
+        sm="5"
+        cols="12"
+        class="pos pr-0"
+      >
+        <PosCoupons2></PosCoupons2>
+      </v-col>
+      <v-col
         v-show="payment"
         xl="5"
         lg="5"
@@ -57,6 +68,17 @@
       <v-col xl="7" lg="7" md="7" sm="7" cols="12" class="pos">
         <Invoice></Invoice>
       </v-col>
+      <v-col
+        v-show="member"
+        xl="5"
+        lg="5"
+        md="5"
+        sm="5"
+        cols="12"
+        class="pos pr-0"
+      >
+        <MemberItem></MemberItem>
+      </v-col>
     </v-row>
   </div>
 </template>
@@ -68,7 +90,9 @@ import Invoice from './Invoice.vue';
 import OpeningDialog from './OpeningDialog.vue';
 import Payments from './Payments.vue';
 import PosOffers from './PosOffers.vue';
+import MemberItem from './MemberItem.vue';
 import PosCoupons from './PosCoupons.vue';
+import PosCoupons2 from './PosCoupons2.vue';
 import Drafts from './Drafts.vue';
 import SalesOrders from "./SalesOrders.vue";
 import ClosingDialog from './ClosingDialog.vue';
@@ -86,6 +110,8 @@ export default {
       payment: false,
       offers: false,
       coupons: false,
+      coupons2: false,
+      member: false,
     };
   },
 
@@ -100,6 +126,8 @@ export default {
     Returns,
     PosOffers,
     PosCoupons,
+    PosCoupons2,
+    MemberItem,
     NewAddress,
     Variants,
     MpesaPayments,
@@ -212,6 +240,12 @@ export default {
         this.offers = false ? data === 'true' : false;
         this.payment = false ? data === 'true' : false;
       });
+      evntBus.$on('show_coupons2', (data) => {
+        this.coupons2 = true ? data === 'true' : false;
+      });
+      evntBus.$on('show_members', (data) => {
+        this.member =  true ? data === 'true' : false;
+      });
       evntBus.$on('open_closing_dialog', () => {
         this.get_closing_data();
       });
@@ -224,8 +258,10 @@ export default {
     evntBus.$off('close_opening_dialog');
     evntBus.$off('register_pos_data');
     evntBus.$off('LoadPosProfile');
+    evntBus.$off('show_members');
     evntBus.$off('show_offers');
     evntBus.$off('show_coupons');
+    evntBus.$off('show_coupons2');
     evntBus.$off('open_closing_dialog');
     evntBus.$off('submit_closing_pos');
   },

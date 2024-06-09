@@ -77,8 +77,8 @@
       append-icon="mdi-plus"
       @click:append="new_membership"
 
-      
-  
+
+
     >
       <template v-slot:item="data">
         <v-list-item-content>
@@ -127,6 +127,7 @@ export default {
     pos_profile: '',
     customers: [],
     customer: '',
+    membershipcard_id: '',
     membershipcards: [],
     membershipcard: '',
     readonly: false,

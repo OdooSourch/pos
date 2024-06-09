@@ -74,6 +74,17 @@
         </v-col>
       </v-row>
     </v-card>
+     <v-card v-if="membershipcard" class="mb-3">
+      <v-card-title>{{ __('Membership Card Details') }}</v-card-title>
+      <v-card-text>
+        <v-row>
+          <v-col cols="12">
+            <strong>{{ __('Membership Card Number') }}:</strong> {{ membershipcard.card_number }}
+          </v-col>
+          <!-- Add more fields as needed -->
+        </v-row>
+      </v-card-text>
+    </v-card>
   </div>
 </template>
 
@@ -96,7 +107,7 @@ export default {
       { text: __('Applied'), value: 'applied', align: 'start' },
     ],
   }),
-  
+
   computed: {
     couponsCount() {
       return this.posa_coupons.length;
@@ -256,6 +267,34 @@ evntBus.$on('show_member', (membershipcard) => {
   }
 });
 
+
+
+
+
+
+evntBus.$on('update_membershipcard', (membershipcard) => {
+      if (this.membershipcard != membershipcard) {
+        const to_remove = [];
+        this.posa_coupons.forEach((el) => {
+          if (el.type == 'Promotional') {
+            el.membershipcard = membershipcard;
+          } else {
+            to_remove.push(el.coupon);
+          }
+        });
+        this.membershipcard = membershipcard;
+        if (to_remove.length) {
+          this.removeCoupon(to_remove);
+        }
+      }
+      this.setActiveGiftCoupons();
+    });
+    evntBus.$on('update_pos_coupons', (data) => {
+      this.updatePosCoupons(data);
+    });
+    evntBus.$on('set_pos_coupons', (data) => {
+      this.posa_coupons = data;
+    });
   },
 };
 </script>
