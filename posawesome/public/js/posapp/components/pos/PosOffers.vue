@@ -288,6 +288,7 @@ export default {
     },
     updateInvoice() {
       evntBus.$emit('update_invoice_coupons', this.posa_coupons2);
+      console.log(this.allItems)
       evntBus.$emit('update_invoice_items', this.allItems);
     },
   },
